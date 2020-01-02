@@ -5,6 +5,7 @@ import sys
 import subprocess
 import tarfile
 from io import BytesIO
+from urllib.parse import urlparse
 
 WINDOWS_PLATFORM = 'Windows'
 OSX_PLATFORM = 'Darwin'
@@ -13,6 +14,14 @@ LINUX_PLATFORM = 'Linux'
 ARCH_64 = '64bit'
 ARCH_32 = '32bit'
 
+# is_url : function for validate url
+def is_url(url) -> bool:
+    try:
+        res = urlparse(url)
+        return all([res.scheme, res.netloc])
+    except:
+        return False
+
 class Insbin(object):
     def __init__(self, url: str, data = {}):
         self.url = url
@@ -20,6 +29,9 @@ class Insbin(object):
 
         if not self.url:
             raise Exception('url should appear in first position of arguments')
+
+        if not is_url(self.url):
+            raise Exception('invalid url')
 
         if not 'installation_dir' in self.data:
             raise Exception('installation_dir should appear in data dict')
@@ -167,4 +179,4 @@ def run() -> None:
 
 
 if __name__ == '__main__':
-    run()
+    get_binary()
