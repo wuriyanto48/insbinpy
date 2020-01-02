@@ -14,9 +14,12 @@ ARCH_64 = '64bit'
 ARCH_32 = '32bit'
 
 class Insbin(object):
-    def __init__(self, url, data = {}):
+    def __init__(self, url: str, data = {}):
         self.url = url
         self.data = data
+
+        if not self.url:
+            raise Exception('url should appear in first position of arguments')
 
         if not 'installation_dir' in self.data:
             raise Exception('installation_dir should appear in data dict')
@@ -28,7 +31,7 @@ class Insbin(object):
         self.binary_directory = ''
         self.binary_path = ''
     
-    def get_installation_dir(self):
+    def get_installation_dir(self) -> str:
         
         if not os.path.isdir(self.installation_dir):
             # create installation dir
@@ -38,21 +41,21 @@ class Insbin(object):
                 raise Exception(err.strerror)
         return self.installation_dir
 
-    def get_binary_directory(self):
+    def get_binary_directory(self) -> str:
         binary_directory = os.path.join(self.installation_dir, 'bin')
         if not os.path.isdir(binary_directory):
             raise Exception('application {} does not exist'.format(self.data['app_name']))
         self.binary_directory = binary_directory
         return self.binary_directory
     
-    def get_binary_path(self):
+    def get_binary_path(self) -> str:
         if self.binary_path == '':
             binary_dir = self.get_binary_directory()
             self.binary_path = os.path.join(binary_dir, self.data['app_name'])
         return self.binary_path
 
     # install binary from given source URL
-    def install(self):
+    def install(self)-> None:
         installation_dir = self.get_installation_dir()
         if not os.path.isdir(installation_dir):
             # create dir
@@ -110,7 +113,7 @@ class Insbin(object):
         tmp_file.close()
 
     # run binary
-    def run(self):
+    def run(self) -> None:
         argv = sys.argv[1:]
         command = [self.get_binary_path(), *argv]
         p = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
@@ -125,7 +128,7 @@ class Insbin(object):
                 sys.stdout.flush()
     
 # show operating system and platform
-def show_platform():
+def show_platform() -> str:
 
     os_type = platform.system()
     os_arch = platform.architecture()[0]
@@ -141,7 +144,7 @@ def show_platform():
     
     raise Exception('cannot identified os type')
 
-def get_binary():
+def get_binary() -> Insbin:
     home = ''
     if sys.version_info >= (3, 5):
         from pathlib import Path
@@ -154,11 +157,11 @@ def get_binary():
     url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
     return Insbin(url, data = {'installation_dir': installation_dir, 'app_name': 'yowes'})
 
-def install():
+def install() -> None:
     binary = get_binary()
     binary.install()
 
-def run():
+def run() -> None:
     binary = get_binary()
     binary.run()
 
