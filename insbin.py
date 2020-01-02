@@ -7,7 +7,7 @@ import tarfile
 from io import BytesIO
 
 WINDOWS_PLATFORM = 'Windows'
-DARWIN_PLATFORM = 'Darwin'
+OSX_PLATFORM = 'Darwin'
 LINUX_PLATFORM = 'Linux'
 
 ARCH_64 = '64bit'
@@ -133,7 +133,7 @@ def show_platform():
     if os_type == WINDOWS_PLATFORM and os_arch == ARCH_64:
         return 'windows-amd64'
     
-    if os_type == DARWIN_PLATFORM and os_arch == ARCH_64:
+    if os_type == OSX_PLATFORM and os_arch == ARCH_64:
         return 'darwin-amd64'
 
     if os_type == LINUX_PLATFORM and os_arch == ARCH_64:
