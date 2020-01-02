@@ -30,7 +30,10 @@ class Insbin(object):
         
         if not os.path.isdir(self.installation_dir):
             # create dir
-            pass
+            try:
+                os.makedirs(self.installation_dir)
+            except OSError as err:
+                raise Exception(err.strerror)
         return self.installation_dir
 
     # install binary from given source URL
