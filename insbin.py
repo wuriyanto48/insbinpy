@@ -26,6 +26,7 @@ class Insbin(object):
 
         self.installation_dir = self.data['installation_dir']
         self.binary_directory = ''
+        self.binary_path = ''
     
     def get_installation_dir(self):
         
@@ -40,20 +41,18 @@ class Insbin(object):
     def get_binary_directory(self):
         binary_directory = os.path.join(self.installation_dir, 'bin')
         if not os.path.isdir(binary_directory):
-            raise Exception(err.strerror)
+            raise Exception('application {} does not exist'.format(self.data['app_name']))
         self.binary_directory = binary_directory
         return self.binary_directory
+    
+    def get_binary_path(self):
+        if self.binary_path == '':
+            binary_dir = self.get_binary_directory()
+            self.binary_path = os.path.join(binary_dir, self.data['app_name'])
+        return self.binary_path
 
     # install binary from given source URL
     def install(self):
-        home = ''
-        if sys.version_info >= (3, 5):
-            from pathlib import Path
-            home = Path.home()
-        else:
-            from os.path import expanduser
-            home = expanduser('~')
-
         installation_dir = self.get_installation_dir()
         if not os.path.isdir(installation_dir):
             # create dir
@@ -71,10 +70,11 @@ class Insbin(object):
         except OSError as err:
             raise Exception(err.strerror)
 
-        url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
+        url = self.url
         req = requests.get(url, stream=True)
 
-        print(req.status_code)
+        if req.status_code != 200:
+            raise Exception('url returned code {}'.format(req.status_code))
 
         file_name = req.headers['Content-Disposition']
         print(file_name)
@@ -112,7 +112,7 @@ class Insbin(object):
     # run binary
     def run(self):
         argv = sys.argv[1:]
-        command = ['./yowes', *argv]
+        command = [self.get_binary_path(), *argv]
         p = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
         while True:
             out = p.stdout.read(1)
@@ -141,6 +141,27 @@ def show_platform():
     
     raise Exception('cannot identified os type')
 
+def get_binary():
+    home = ''
+    if sys.version_info >= (3, 5):
+        from pathlib import Path
+        home = Path.home()
+    else:
+        from os.path import expanduser
+        home = expanduser('~')
+    
+    installation_dir = os.path.join(home, '.yowes')
+    url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
+    return Insbin(url, data = {'installation_dir': installation_dir, 'app_name': 'yowes'})
+
+def install():
+    binary = get_binary()
+    binary.install()
+
+def run():
+    binary = get_binary()
+    binary.run()
+
 
 if __name__ == '__main__':
-    binary = Insbin('url', data = {'installation_dir': '/Users/wuriyanto', 'app_name': 'yowes'})
+    run()
