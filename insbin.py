@@ -25,25 +25,51 @@ class Insbin(object):
             raise Exception('app_name should appear in data dict')
 
         self.installation_dir = self.data['installation_dir']
+        self.binary_directory = ''
     
     def get_installation_dir(self):
         
         if not os.path.isdir(self.installation_dir):
-            # create dir
+            # create installation dir
             try:
                 os.makedirs(self.installation_dir)
             except OSError as err:
                 raise Exception(err.strerror)
         return self.installation_dir
 
+    def get_binary_directory(self):
+        binary_directory = os.path.join(self.installation_dir, 'bin')
+        if not os.path.isdir(binary_directory):
+            raise Exception(err.strerror)
+        self.binary_directory = binary_directory
+        return self.binary_directory
+
     # install binary from given source URL
     def install(self):
+        home = ''
         if sys.version_info >= (3, 5):
             from pathlib import Path
             home = Path.home()
         else:
             from os.path import expanduser
             home = expanduser('~')
+
+        installation_dir = self.get_installation_dir()
+        if not os.path.isdir(installation_dir):
+            # create dir
+            try:
+                os.makedirs(installation_dir)
+            except OSError as err:
+                raise Exception(err.strerror)
+
+        
+        self.binary_directory = os.path.join(installation_dir, 'bin')
+        
+        # create bin dir
+        try:
+            os.makedirs(self.binary_directory)
+        except OSError as err:
+            raise Exception(err.strerror)
 
         url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
         req = requests.get(url, stream=True)
@@ -76,7 +102,7 @@ class Insbin(object):
         if len(tar.getnames()) > 0:
             try:
                 bin_name = tar.getnames()[0]
-                e = tar.extractall(path='.', members=None)
+                e = tar.extractall(path=self.binary_directory, members=None)
             except KeyError:
                 print('extract error')
         
