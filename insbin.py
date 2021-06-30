@@ -23,9 +23,9 @@ def is_url(url) -> bool:
         return False
 
 class Insbin(object):
-    def __init__(self, url: str, data = {}):
+    def __init__(self, url: str, opts = {}):
         self.url = url
-        self.data = data
+        self.opts = opts
 
         if not self.url:
             raise Exception('url should appear in first position of arguments')
@@ -33,13 +33,13 @@ class Insbin(object):
         if not is_url(self.url):
             raise Exception('invalid url')
 
-        if not 'installation_dir' in self.data:
-            raise Exception('installation_dir should appear in data dict')
+        if not 'installation_dir' in self.opts:
+            raise Exception('installation_dir should appear in opts dict')
 
-        if not 'app_name' in self.data:
-            raise Exception('app_name should appear in data dict')
+        if not 'app_name' in self.opts:
+            raise Exception('app_name should appear in opts dict')
 
-        self.installation_dir = self.data['installation_dir']
+        self.installation_dir = self.opts['installation_dir']
         self.binary_directory = ''
         self.binary_path = ''
     
@@ -56,7 +56,7 @@ class Insbin(object):
     def get_binary_directory(self) -> str:
         binary_directory = os.path.join(self.installation_dir, 'bin')
         if not os.path.isdir(binary_directory):
-            # raise Exception('application {} does not exist'.format(self.data['app_name']))
+            # raise Exception('application {} does not exist'.format(self.opts['app_name']))
             # install intead
             self.install()
         self.binary_directory = binary_directory
@@ -65,7 +65,7 @@ class Insbin(object):
     def get_binary_path(self) -> str:
         if self.binary_path == '':
             binary_dir = self.get_binary_directory()
-            self.binary_path = os.path.join(binary_dir, self.data['app_name'])
+            self.binary_path = os.path.join(binary_dir, self.opts['app_name'])
         return self.binary_path
 
     # install binary from given source URL
@@ -167,7 +167,9 @@ def show_platform() -> str:
     
     raise Exception('cannot identified os type')
 
-def get_binary() -> Insbin:
+# install to home folder
+# eg: /Users/ubuntu
+def install_to_home() -> Insbin:
     from os.path import expanduser
     home = expanduser('~')
 
@@ -177,15 +179,7 @@ def get_binary() -> Insbin:
  
     installation_dir = os.path.join(home, '.yowes')
     url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
-    return Insbin(url, data = {'installation_dir': installation_dir, 'app_name': 'yowes'})
-
-def install() -> None:
-    binary = get_binary()
-    binary.install()
-
-def run() -> None:
-    binary = get_binary()
-    binary.run()
+    return Insbin(url, opts = {'installation_dir': installation_dir, 'app_name': 'yowes'})
 
 
 if __name__ == '__main__':
@@ -194,6 +188,6 @@ if __name__ == '__main__':
  
     installation_dir = os.path.join(home, '.yowes')
     url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
-    ins = Insbin(url, data = {'installation_dir': installation_dir, 'app_name': 'yowes'})
+    ins = Insbin(url, opts = {'installation_dir': installation_dir, 'app_name': 'yowes'})
     # ins.install()
     ins.run()
