@@ -4,6 +4,8 @@ import requests
 import sys
 import subprocess
 import tarfile
+from multiprocessing import Process, Pipe
+from multiprocessing.connection import Connection
 from io import BytesIO
 from urllib.parse import urlparse
 
@@ -92,39 +94,65 @@ class Insbin(object):
         except OSError as err:
             raise Exception(err.strerror)
 
-        url = self.url
-        req = requests.get(url, stream=True)
-
-        if req.status_code != 200:
-            raise Exception('url returned code {}'.format(req.status_code))
-
-        file_name = req.headers['Content-Disposition']
-        print(file_name)
-
         tmp_file = BytesIO()
-        while True:
-            # download piece of file from given url
-            s = req.raw.read(16384)
 
-            # tarfile returns b'', if the download process finished
-            if not s:
-                break
-            
-            # logging
-            print("downloading")
-            print(".")
+        def log(receiver: Connection, sender: Connection):
+            print('downloading', end='')
+            sender.close()
+            while True:
+                if receiver.poll():
+                    done = receiver.recv()
+                    if done:
+                        print('download done')
+                        break
+                else:
+                    print('.', end='')
 
-            tmp_file.write(s)
-        req.raw.close()
+        # multiprocess
+        def download(sender: Connection):
+            url = self.url
+            req = requests.get(url, stream=True)
+
+            if req.status_code != 200:
+                raise Exception('url returned code {}'.format(req.status_code))
+
+            file_name = req.headers['Content-Disposition']
+            print(file_name)
+
+            while True:
+
+                # download piece of file from given url
+                s = req.raw.read(1024)
+
+                # tarfile returns b'', if the download process finished
+                if not s:
+                    break
+
+                tmp_file.write(s)
+            req.raw.close()
+
+            # send notification to log() process
+            sender.send(True)
+
+        receiver, sender = Pipe()
+        log_process = Process(target = log, args = (receiver, sender))
+        log_process.daemon = True
+        log_process.start()
+
+        receiver.close()
+        download(sender)
+
+        log_process.join()
+
+        # multiprocess done
 
         # Begin by seeking back to the beginning of the
         # temporary file.
         tmp_file.seek(0)
 
-
         tar = tarfile.open(fileobj=tmp_file, mode='r:gz')
-        print(tar.getnames())
 
+        # extract tar file
         if len(tar.getnames()) > 0:
             try:
                 bin_name = tar.getnames()[0]
