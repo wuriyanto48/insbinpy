@@ -56,7 +56,9 @@ class Insbin(object):
     def get_binary_directory(self) -> str:
         binary_directory = os.path.join(self.installation_dir, 'bin')
         if not os.path.isdir(binary_directory):
-            raise Exception('application {} does not exist'.format(self.data['app_name']))
+            # raise Exception('application {} does not exist'.format(self.data['app_name']))
+            # install intead
+            self.install()
         self.binary_directory = binary_directory
         return self.binary_directory
     
@@ -78,6 +80,11 @@ class Insbin(object):
 
         
         self.binary_directory = os.path.join(installation_dir, 'bin')
+
+        #  binary folder already exist, so its already installed
+        # exit from install method
+        if os.path.isdir(self.binary_directory):
+            return
         
         # create bin dir
         try:
@@ -102,6 +109,10 @@ class Insbin(object):
             # tarfile returns b'', if the download process finished
             if not s:
                 break
+            
+            # logging
+            print("downloading")
+            print(".")
 
             tmp_file.write(s)
         req.raw.close()
@@ -133,7 +144,7 @@ class Insbin(object):
             out = p.stdout.read(1)
             return_code = p.poll()
             if out == '' and return_code is not None:
-                print('RETURN_CODE ', return_code)
+                # print('RETURN_CODE ', return_code)
                 break
             if out != '':
                 sys.stdout.write(out)
@@ -157,14 +168,13 @@ def show_platform() -> str:
     raise Exception('cannot identified os type')
 
 def get_binary() -> Insbin:
-    home = ''
+    from os.path import expanduser
+    home = expanduser('~')
+
     if sys.version_info >= (3, 5):
         from pathlib import Path
         home = Path.home()
-    else:
-        from os.path import expanduser
-        home = expanduser('~')
-    
+ 
     installation_dir = os.path.join(home, '.yowes')
     url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
     return Insbin(url, data = {'installation_dir': installation_dir, 'app_name': 'yowes'})
@@ -179,4 +189,11 @@ def run() -> None:
 
 
 if __name__ == '__main__':
-    get_binary()
+    # get_binary()
+    home = os.path.dirname(os.path.abspath(__file__))
+ 
+    installation_dir = os.path.join(home, '.yowes')
+    url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
+    ins = Insbin(url, data = {'installation_dir': installation_dir, 'app_name': 'yowes'})
+    # ins.install()
+    ins.run()
