@@ -179,44 +179,37 @@ class Insbin(object):
                 sys.stdout.write(out)
                 sys.stdout.flush()
     
-# show operating system and platform
-def show_platform() -> str:
+    # show operating system and platform
+    @staticmethod
+    def get_platform() -> str:
 
-    os_type = platform.system()
-    os_arch = platform.architecture()[0]
+        os_type = platform.system()
+        os_arch = platform.architecture()[0]
 
-    if os_type == WINDOWS_PLATFORM and os_arch == ARCH_64:
-        return 'windows-amd64'
-    
-    if os_type == OSX_PLATFORM and os_arch == ARCH_64:
-        return 'darwin-amd64'
+        if os_type == WINDOWS_PLATFORM and os_arch == ARCH_64:
+            return 'windows-amd64'
+        
+        if os_type == OSX_PLATFORM and os_arch == ARCH_64:
+            return 'darwin-amd64'
 
-    if os_type == LINUX_PLATFORM and os_arch == ARCH_64:
-        return 'linux-amd64'
-    
-    raise Exception('cannot identified os type')
+        if os_type == LINUX_PLATFORM and os_arch == ARCH_64:
+            return 'linux-amd64'
+        
+        raise Exception('cannot identified os type')
 
-# install to home folder
-# eg: /Users/ubuntu
-def install_to_home() -> Insbin:
-    from os.path import expanduser
-    home = expanduser('~')
+    # install to home folder
+    # eg: /Users/ubuntu
+    @staticmethod
+    def install_to_home(app_name: str, url, installation_dir: str):
+        from os.path import expanduser
+        home = expanduser('~')
 
-    if sys.version_info >= (3, 5):
-        from pathlib import Path
-        home = Path.home()
- 
-    installation_dir = os.path.join(home, '.yowes')
-    url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
-    return Insbin(url, opts = {'installation_dir': installation_dir, 'app_name': 'yowes'})
+        if sys.version_info >= (3, 5):
+            from pathlib import Path
+            home = Path.home()
 
+        # if installation_dir is empty, give the installation_dir default to home
+        if installation_dir == '':
+            installation_dir = os.path.join(home, f'.{app_name}')
 
-if __name__ == '__main__':
-    # get_binary()
-    home = os.path.dirname(os.path.abspath(__file__))
- 
-    installation_dir = os.path.join(home, '.yowes')
-    url = 'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.darwin-amd64.tar.gz'
-    ins = Insbin(url, opts = {'installation_dir': installation_dir, 'app_name': 'yowes'})
-    # ins.install()
-    ins.run()
+        return Insbin(url, opts = {'installation_dir': installation_dir, 'app_name': app_name})
