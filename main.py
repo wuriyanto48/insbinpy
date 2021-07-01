@@ -17,4 +17,7 @@ if __name__ == '__main__':
     url = f'https://github.com/wuriyanto48/yowes/releases/download/v1.0.0/yowes-v1.0.0.{os_platform}.tar.gz'
     ins = Insbin.install_to_home(app_name='yowes', url=url, installation_dir=installation_dir)
     # ins.install()
-    ins.run()
+    try:
+        ins.run()
+    except Exception as e:
+        print(e)

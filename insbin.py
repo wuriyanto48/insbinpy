@@ -60,14 +60,20 @@ class Insbin(object):
         if not os.path.isdir(binary_directory):
             # raise Exception('application {} does not exist'.format(self.opts['app_name']))
             # install instead
-            self.install()
+            try:
+                self.install()
+            except Exception as e:
+                raise e
         self.binary_directory = binary_directory
         return self.binary_directory
     
     def get_binary_path(self) -> str:
         if self.binary_path == '':
-            binary_dir = self.get_binary_directory()
-            self.binary_path = os.path.join(binary_dir, self.opts['app_name'])
+            try:
+                binary_dir = self.get_binary_directory()
+                self.binary_path = os.path.join(binary_dir, self.opts['app_name'])
+            except Exception as e:
+                raise e
         return self.binary_path
 
     # install binary from given source URL
@@ -159,7 +165,9 @@ class Insbin(object):
             try:
                 tar.extractall(path=self.binary_directory, members=None)
             except KeyError:
-                print('extract error')
+                tar.close()
+                tmp_file.close()
+                raise Exception('insbin: extracting tar file error')
         
         tar.close()
         tmp_file.close()
