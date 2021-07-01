@@ -17,7 +17,7 @@ ARCH_64 = '64bit'
 ARCH_32 = '32bit'
 
 # is_url : function for validate url
-def is_url(url) -> bool:
+def is_url(url: str) -> bool:
     try:
         res = urlparse(url)
         return all([res.scheme, res.netloc])
@@ -208,7 +208,7 @@ class Insbin(object):
     # install to home folder
     # eg: /Users/ubuntu
     @staticmethod
-    def install_to_home(app_name: str, url, installation_dir: str):
+    def install_to_home(app_name: str, url: str, installation_dir: str):
         from os.path import expanduser
         home = expanduser('~')
 
