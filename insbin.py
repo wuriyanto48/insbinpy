@@ -59,7 +59,7 @@ class Insbin(object):
         binary_directory = os.path.join(self.installation_dir, 'bin')
         if not os.path.isdir(binary_directory):
             # raise Exception('application {} does not exist'.format(self.opts['app_name']))
-            # install intead
+            # install instead
             self.install()
         self.binary_directory = binary_directory
         return self.binary_directory
@@ -83,7 +83,7 @@ class Insbin(object):
         
         self.binary_directory = os.path.join(installation_dir, 'bin')
 
-        #  binary folder already exist, so its already installed
+        # binary folder already exist, so its already installed
         # exit from install method
         if os.path.isdir(self.binary_directory):
             return
@@ -93,7 +93,8 @@ class Insbin(object):
             os.makedirs(self.binary_directory)
         except OSError as err:
             raise Exception(err.strerror)
-
+        
+        # create temporary memory 
         tmp_file = BytesIO()
 
         def log(receiver: Connection, sender: Connection):
@@ -132,6 +133,7 @@ class Insbin(object):
             req.raw.close()
 
             # send notification to log() process
+            # indicating the download process done
             sender.send(True)
 
         receiver, sender = Pipe()
@@ -155,8 +157,7 @@ class Insbin(object):
         # extract tar file
         if len(tar.getnames()) > 0:
             try:
-                bin_name = tar.getnames()[0]
-                e = tar.extractall(path=self.binary_directory, members=None)
+                tar.extractall(path=self.binary_directory, members=None)
             except KeyError:
                 print('extract error')
         
