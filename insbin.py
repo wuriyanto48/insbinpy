@@ -2,6 +2,7 @@ import os
 import platform
 import requests
 import sys
+import shutil
 import subprocess
 import tarfile
 from multiprocessing import Process, Pipe
@@ -26,59 +27,64 @@ def is_url(url: str) -> bool:
 
 class Insbin(object):
     def __init__(self, url: str, opts = {}):
-        self.url = url
-        self.opts = opts
+        self.__url = url
+        self.__opts = opts
 
-        if not self.url:
+        if not self.__url:
             raise Exception('url should appear in first position of arguments')
 
-        if not is_url(self.url):
+        if not is_url(self.__url):
             raise Exception('invalid url')
 
-        if not 'installation_dir' in self.opts:
+        if not 'installation_dir' in self.__opts:
             raise Exception('installation_dir should appear in opts dict')
 
-        if not 'app_name' in self.opts:
+        if not 'app_name' in self.__opts:
             raise Exception('app_name should appear in opts dict')
 
-        self.installation_dir = self.opts['installation_dir']
-        self.binary_directory = ''
-        self.binary_path = ''
+        self.__installation_dir = self.__opts['installation_dir']
+        self.__binary_directory = ''
+        self.__binary_path = ''
     
-    def get_installation_dir(self) -> str:
-        
-        if not os.path.isdir(self.installation_dir):
+    def __get_installation_dir(self) -> str:
+        if os.path.isdir(self.__installation_dir):
             # create installation dir
             try:
-                os.makedirs(self.installation_dir)
+                # remove folder first(uninstall existing binary) if already exist
+                shutil.rmtree(self.__installation_dir)
+                print(f'removing current installation: {self.__installation_dir}')
+
+                # recreate the folder
+                os.makedirs(self.__installation_dir)
+                print(f'recreating installation: {self.__installation_dir}')
             except OSError as err:
                 raise Exception(err.strerror)
-        return self.installation_dir
+        return self.__installation_dir
 
-    def get_binary_directory(self) -> str:
-        binary_directory = os.path.join(self.installation_dir, 'bin')
+    def __get_binary_directory(self) -> str:
+        binary_directory = os.path.join(self.__installation_dir, 'bin')
         if not os.path.isdir(binary_directory):
-            # raise Exception('application {} does not exist'.format(self.opts['app_name']))
+            # raise Exception('application {} does not exist'.format(self.__opts['app_name']))
             # install instead
             try:
                 self.install()
             except Exception as e:
                 raise e
-        self.binary_directory = binary_directory
-        return self.binary_directory
+        self.__binary_directory = binary_directory
+        return self.__binary_directory
     
-    def get_binary_path(self) -> str:
-        if self.binary_path == '':
+    def __get_binary_path(self) -> str:
+        if self.__binary_path == '':
             try:
-                binary_dir = self.get_binary_directory()
-                self.binary_path = os.path.join(binary_dir, self.opts['app_name'])
+                binary_dir = self.__get_binary_directory()
+                self.__binary_path = os.path.join(binary_dir, self.__opts['app_name'])
             except Exception as e:
                 raise e
-        return self.binary_path
+        return self.__binary_path
 
     # install binary from given source URL
     def install(self)-> None:
-        installation_dir = self.get_installation_dir()
+        installation_dir = self.__get_installation_dir()
         if not os.path.isdir(installation_dir):
             # create dir
             try:
@@ -87,16 +93,16 @@ class Insbin(object):
                 raise Exception(err.strerror)
 
         
-        self.binary_directory = os.path.join(installation_dir, 'bin')
+        self.__binary_directory = os.path.join(installation_dir, 'bin')
 
         # binary folder already exist, so its already installed
         # exit from install method
-        if os.path.isdir(self.binary_directory):
+        if os.path.isdir(self.__binary_directory):
             return
         
         # create bin dir
         try:
-            os.makedirs(self.binary_directory)
+            os.makedirs(self.__binary_directory)
         except OSError as err:
             raise Exception(err.strerror)
         
@@ -117,7 +123,7 @@ class Insbin(object):
 
         # multiprocess
         def download(sender: Connection):
-            url = self.url
+            url = self.__url
             req = requests.get(url, stream=True)
 
             if req.status_code != 200:
@@ -127,7 +133,7 @@ class Insbin(object):
             print(file_name)
 
             while True:
-
+                
                 # download piece of file from given url
                 s = req.raw.read(1024)
 
@@ -163,7 +169,7 @@ class Insbin(object):
         # extract tar file
         if len(tar.getnames()) > 0:
             try:
-                tar.extractall(path=self.binary_directory, members=None)
+                tar.extractall(path=self.__binary_directory, members=None)
             except KeyError:
                 tar.close()
                 tmp_file.close()
@@ -175,7 +181,7 @@ class Insbin(object):
     # run binary
     def run(self) -> None:
         argv = sys.argv[1:]
-        command = [self.get_binary_path(), *argv]
+        command = [self.__get_binary_path(), *argv]
         p = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
         while True:
             out = p.stdout.read(1)
