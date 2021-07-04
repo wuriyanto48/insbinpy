@@ -53,10 +53,7 @@ class Insbin(object):
         self.__binary_directory = ''
         self.__binary_path = ''
 
-        def loading_state(msg='. '):
-            print(msg, end='', flush=True)
-
-        self.ticker = Ticker(1, loading_state)
+        self.ticker = Ticker(1, lambda msg='. ': print(msg, end='', flush=True))
     
     def __get_installation_dir(self) -> str:
         if os.path.isdir(self.__installation_dir):
