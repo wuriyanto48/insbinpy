@@ -122,7 +122,7 @@ class Insbin(object):
         tmp_file = BytesIO()
         
         def log_timer(receiver: Connection, sender: Connection):
-            print('downloading', end='', flush=True)
+            print('downloading ', end='', flush=True)
             sender.close()
 
             # start ticker
