@@ -5,10 +5,12 @@ import sys
 import shutil
 import subprocess
 import tarfile
+from io import BytesIO
 from multiprocessing import Process, Pipe
 from multiprocessing.connection import Connection
-from io import BytesIO
 from urllib.parse import urlparse
+from threading import Timer
+
 
 WINDOWS_PLATFORM = 'Windows'
 OSX_PLATFORM = 'Darwin'
@@ -24,6 +26,11 @@ def is_url(url: str) -> bool:
         return all([res.scheme, res.netloc])
     except:
         return False
+
+class Ticker(Timer):
+    def run(self):
+        while not self.finished.wait(self.interval):
+            self.function(*self.args, **self.kwargs)
 
 class Insbin(object):
     def __init__(self, url: str, opts = {}):
@@ -45,6 +52,11 @@ class Insbin(object):
         self.__installation_dir = self.__opts['installation_dir']
         self.__binary_directory = ''
         self.__binary_path = ''
+
+        def loading_state(msg='. '):
+            print(msg, end='', flush=True)
+
+        self.ticker = Ticker(1, loading_state)
     
     def __get_installation_dir(self) -> str:
         if os.path.isdir(self.__installation_dir):
@@ -52,11 +64,11 @@ class Insbin(object):
             try:
                 # remove folder first(uninstall existing binary) if already exist
                 shutil.rmtree(self.__installation_dir)
-                print(f'removing current installation: {self.__installation_dir}')
+                print(f'removing current installation: {self.__installation_dir}', flush=True)
 
                 # recreate the folder
                 os.makedirs(self.__installation_dir)
-                print(f'recreating installation: {self.__installation_dir}')
+                print(f'recreating installation: {self.__installation_dir}', flush=True)
             except OSError as err:
                 raise Exception(err.strerror)
         return self.__installation_dir
@@ -110,16 +122,34 @@ class Insbin(object):
         tmp_file = BytesIO()
 
         def log(receiver: Connection, sender: Connection):
-            print('downloading', end='')
+            print('downloading', end='', flush=True)
             sender.close()
             while True:
                 if receiver.poll():
                     done = receiver.recv()
                     if done:
-                        print('download done')
+                        print('download done', flush=True)
                         break
                 else:
-                    print('.', end='')
+                    print('.', end='', flush=True)
+        
+        def log_timer(receiver: Connection, sender: Connection):
+            print('downloading', end='', flush=True)
+            sender.close()
+
+            # start ticker
+            self.ticker.start()
+            
+            while True:
+                if receiver.poll():
+                    done = receiver.recv()
+                    if done:
+                        print(flush=True)
+                        print('download done', flush=True)
+
+                        # stop ticker when download process done
+                        self.ticker.cancel()
+                        break
 
         # multiprocess
         def download(sender: Connection):
@@ -129,8 +159,8 @@ class Insbin(object):
             if req.status_code != 200:
                 raise Exception('url returned code {}'.format(req.status_code))
 
-            file_name = req.headers['Content-Disposition']
-            print(file_name)
+            # file_name = req.headers['Content-Disposition']
+            # print(file_name)
 
             while True:
                 
@@ -149,7 +179,7 @@ class Insbin(object):
             sender.send(True)
 
         receiver, sender = Pipe()
-        log_process = Process(target = log, args = (receiver, sender))
+        log_process = Process(target = log_timer, args = (receiver, sender))
         log_process.daemon = True
         log_process.start()
 
