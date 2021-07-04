@@ -120,18 +120,6 @@ class Insbin(object):
         
         # create temporary memory 
         tmp_file = BytesIO()
-
-        def log(receiver: Connection, sender: Connection):
-            print('downloading', end='', flush=True)
-            sender.close()
-            while True:
-                if receiver.poll():
-                    done = receiver.recv()
-                    if done:
-                        print('download done', flush=True)
-                        break
-                else:
-                    print('.', end='', flush=True)
         
         def log_timer(receiver: Connection, sender: Connection):
             print('downloading', end='', flush=True)
