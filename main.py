@@ -1,6 +1,6 @@
 import sys
 import os
-from insbin import Insbin
+from insbin.insbin import Insbin
 
 # example
 # install yowes from its github release page

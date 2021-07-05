@@ -11,11 +11,21 @@ from multiprocessing.connection import Connection
 from urllib.parse import urlparse
 from threading import Timer
 
+'''
+version
+'''
+__version__ = '0.0.1'
 
+'''
+target platform
+'''
 WINDOWS_PLATFORM = 'Windows'
 OSX_PLATFORM = 'Darwin'
 LINUX_PLATFORM = 'Linux'
 
+'''
+target architecture
+'''
 ARCH_64 = '64bit'
 ARCH_32 = '32bit'
 
@@ -27,11 +37,19 @@ def is_url(url: str) -> bool:
     except:
         return False
 
+'''
+Ticker class
+represent process that executed for each tick for given interval
+'''
 class Ticker(Timer):
     def run(self):
         while not self.finished.wait(self.interval):
             self.function(*self.args, **self.kwargs)
 
+'''
+Insbin
+binary installer
+'''
 class Insbin(object):
     def __init__(self, url: str, opts = {}):
         self.__url = url
